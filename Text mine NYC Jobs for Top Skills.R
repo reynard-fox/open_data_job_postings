@@ -4,9 +4,6 @@
 
 # Text mining NYC jobs
 
-# In a regular script I would also include these two commands to set my working directory. 
-script_name <- rstudioapi::getSourceEditorContext()$path
-setwd(dirname(script_name))
 
 # https://data.cityofnewyork.us/City-Government/NYC-Jobs/kpav-sd4t
 
@@ -19,10 +16,15 @@ library(tidyverse)
 # library(jsonlite)
 library(lubridate)
 
-  
-token <- "Jrnkdqk2blfgnBSZRpvNsKCCL"
+
+
 nyc_jobs <- "https://data.cityofnewyork.us/resource/kpav-sd4t.json?$select=*"
 nyc_jobs <- read.socrata("https://data.cityofnewyork.us/api/odata/v4/kpav-sd4t",stringsAsFactors=FALSE)
+
+
+# In a regular script I would also include these two commands to set my working directory. 
+script_name <- rstudioapi::getSourceEditorContext()$path
+setwd(dirname(script_name))
 
 
 # prep for analysis
@@ -134,6 +136,7 @@ nyc_jobs <- nyc_jobs %>%
          sql = if_else(str_detect(preferred_skills,t_sql),1,0,missing=0),
          python = if_else(str_detect(preferred_skills,t_python),1,0,missing=0),
          rstudio = if_else(str_detect(preferred_skills,t_rstudio),1,0,missing=0)) 
+
 
 nyc_jobs %>% summarize(microsoft = sum(microsoft),
                        ms_access = sum(ms_access),
