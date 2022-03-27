@@ -1,12 +1,15 @@
+#------------------[ REFERENCE MATERIAL]------------------#
+
 #https://stackoverflow.com/questions/49886782/remove-special-characters-from-entire-dataframe-in-r
 #https://rpubs.com/tonmcg/socrata-discovery
 #https://stackoverflow.com/questions/21641522/how-to-remove-specific-special-characters-in-r/21641569
 
+
+
 # Text mining NYC jobs
-
-
 # https://data.cityofnewyork.us/City-Government/NYC-Jobs/kpav-sd4t
 
+# Clean up
 rm(list=ls())
 
 library(RSocrata)
@@ -16,11 +19,9 @@ library(tidyverse)
 # library(jsonlite)
 library(lubridate)
 
-
-
+# Load data
 nyc_jobs <- "https://data.cityofnewyork.us/resource/kpav-sd4t.json?$select=*"
 nyc_jobs <- read.socrata("https://data.cityofnewyork.us/api/odata/v4/kpav-sd4t",stringsAsFactors=FALSE)
-
 
 # In a regular script I would also include these two commands to set my working directory. 
 script_name <- rstudioapi::getSourceEditorContext()$path
@@ -78,8 +79,8 @@ job_postings_by_exp_level_agency <- nyc_jobs %>%
   rowwise() %>% mutate(Total = rowSums(across(where(is.numeric))))
 
 
-
-# I removed keyword "R"
+# list of terms to search postings for
+# I removed keyword "R" - too many false hits
 system <- c("R",	"R",	"R",	"R",	"R",	"R",	"R",	"R",	"R",	"R",	"R",	"R")
 key_word <- c("RStudio",	"Rstudio",	"R,",	" R,",	" R ",	"DBI",	"tidyverse",	"dplyr",	"tidyr",	"ggplot2",	"ggplot",	"ggmap")
 system_words <- as.data.frame(cbind(system,key_word))
@@ -111,8 +112,7 @@ temp <- as.data.frame(cbind(system,key_word))
 system_words <- rbind(system_words,temp)
 rm(temp)
 
-# ACCESS & EXCEL MUST have a match on Microsoft TOO to count
-
+# ACCESS & EXCEL MUST have a match on Microsoft to count
 microsoft <- system_words %>% filter(system=="Microsoft") %>% select(key_word) %>% unlist()
 ms_access <- system_words %>% filter(system=="Access") %>% select(key_word) %>% unlist()
 ms_excel <- system_words %>% filter(system=="Excel") %>% select(key_word) %>% unlist()
@@ -120,7 +120,7 @@ sql <- system_words %>% filter(system=="SQL") %>% select(key_word) %>% unlist()
 python <- system_words %>% filter(system=="Python") %>% select(key_word) %>% unlist()
 rstudio <- system_words %>% filter(system=="R") %>% select(key_word) %>% unlist()
 
-
+# prep list for matching
 t_microsoft <- paste0(unlist(microsoft),collapse = "|")
 t_ms_access <- paste0(unlist(ms_access),collapse = "|")
 t_ms_excel <- paste0(unlist(ms_excel),collapse = "|")
@@ -128,7 +128,7 @@ t_sql <- paste0(unlist(sql),collapse = "|")
 t_python <- paste0(unlist(python),collapse = "|")
 t_rstudio <- paste0(unlist(rstudio),collapse = "|")
 
-
+# match
 nyc_jobs <- nyc_jobs %>% 
   mutate(microsoft = if_else(str_detect(preferred_skills,t_microsoft),1,0,missing=0),
          ms_access = if_else(str_detect(preferred_skills,t_ms_access) & str_detect(preferred_skills,t_microsoft),1,0,missing=0),
@@ -137,7 +137,7 @@ nyc_jobs <- nyc_jobs %>%
          python = if_else(str_detect(preferred_skills,t_python),1,0,missing=0),
          rstudio = if_else(str_detect(preferred_skills,t_rstudio),1,0,missing=0)) 
 
-
+# sumamrize findings
 nyc_jobs %>% summarize(microsoft = sum(microsoft),
                        ms_access = sum(ms_access),
                        ms_excel = sum(ms_excel),
@@ -145,7 +145,7 @@ nyc_jobs %>% summarize(microsoft = sum(microsoft),
                        python = sum(python),
                        rstudio = sum(rstudio))
 
-# ,
+
 # DATA: total job postings by career level & preferred skill
 nyc_jobs %>% 
   select(career_level,microsoft,ms_access,ms_excel,sql,python,rstudio) %>%
@@ -172,11 +172,11 @@ nyc_jobs %>%
 
 # STOP
 ###############################################################
-# preferred skill analysis - how does it vary by identified key words? 
+# NEXT - preferred skill analysis - how does it vary by identified key words? 
 # https://towardsdatascience.com/python-vs-r-what-i-learned-from-4-000-job-advertisements-ab41661b7f28
 
 
-# there are encoding issues to remove
+# there are encoding issues to remove - these didn't work
 # nyc_jobs$preferred_skills[3] 
 # iconv(nyc_jobs$preferred_skills[3], "UTF-8", "ASCII", sub="")
 # str_squish(str_trim(iconv(test, "UTF-8", "ASCII", sub="")))
@@ -184,28 +184,28 @@ nyc_jobs %>%
 # options include: latin1, ASCII, UTF-8,'ASCII//TRANSLIT'
 # str_squish(str_trim(iconv(test$preferred_skills[3], "UTF-8", "ASCII", sub="")))
 
+
+test <- nyc_jobs
+
+# there are encoding issues to remove
 test[] <- lapply(test, iconv, "UTF-8", "ASCII", sub="")
 test[] <- lapply(test, str_trim)
 test[] <- lapply(test, str_squish)
 
 
-to_review <- nyc_jobs %>% 
+to_test <- test %>% 
   select(job_description,minimum_qual_requirements,preferred_skills) %>% 
   as.data.frame()
 
 
-job_preferred_skills <- test %>% select(preferred_skills) %>% 
+test_job_preferred_skills <- test %>% select(preferred_skills) %>% 
   filter(!map_lgl(preferred_skills, is.null)) %>%
   filter(!map_lgl(preferred_skills, is.na)) %>% 
   filter(preferred_skills != "") %>% unnest(preferred_skills)
 
-job_preferred_skills %>%
-  mutate_all(funs(gsub("[^[:alnum:] ]", "", .))) -> test
-
-test <- as.data.frame(gsub("[[:punct:]]", "", as.matrix(job_preferred_skills))) 
-
-
-
+test_job_preferred_skills %>%
+  mutate_all(funs(gsub("[^[:alnum:] ]", "", .))) %>%
+  mutate_all(funs(gsub("[[:punct:]]", "", .))) -> test
 
 
 job_preferred_skills_tokens <- test %>%
@@ -219,33 +219,6 @@ job_preferred_skills_tokens %>%
   ggplot(aes(n, word)) +
   geom_col() +
   labs(y = NULL)
-
-
-
-unnest_tokens(as.data.frame(test[1,]), token = "words", format = c("text"))
-
-
-tidytext::unnest_tokens(as.data.frame(test[1,]),word, title) 
-
-%>% # filter out null values
- 
-
-
-
-%>% as.data.frame() %>% unnest_tokens(word,text)
-
-as.character() %>% %>% unlist()
-
-nyc_jobs %>% select(job_description) %>% as.character() %>% unnest_tokens(word,text)
-
-
-original_books <- nyc_jobs %>%
-  group_by(book) %>%
-  mutate(linenumber = row_number(),
-         chapter = cumsum(str_detect(text, 
-                                     regex("^chapter [\\divxlc]",
-                                           ignore_case = TRUE)))) %>%
-  ungroup()
 
 
 
