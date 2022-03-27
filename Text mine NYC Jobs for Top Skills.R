@@ -23,7 +23,7 @@ library(lubridate)
 nyc_jobs <- "https://data.cityofnewyork.us/resource/kpav-sd4t.json?$select=*"
 nyc_jobs <- read.socrata("https://data.cityofnewyork.us/api/odata/v4/kpav-sd4t",stringsAsFactors=FALSE)
 
-# In a regular script I would also include these two commands to set my working directory. 
+# Set working directory
 script_name <- rstudioapi::getSourceEditorContext()$path
 setwd(dirname(script_name))
 
