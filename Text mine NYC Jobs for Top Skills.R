@@ -1,14 +1,34 @@
 #------------------[ REFERENCE MATERIAL]------------------#
 
-#https://stackoverflow.com/questions/49886782/remove-special-characters-from-entire-dataframe-in-r
-#https://rpubs.com/tonmcg/socrata-discovery
-#https://stackoverflow.com/questions/21641522/how-to-remove-specific-special-characters-in-r/21641569
+# > MAIN References
+# https://rpubs.com/tonmcg/socrata-discovery
+# https://www.tidytextmining.com/index.html
+# https://epirhandbook.com/en/index.html
+# https://paldhous.github.io/NICAR/2019/r-text-analysis.html
+# http://rstudio-pubs-static.s3.amazonaws.com/256588_57b585da6c054349825cba46685d8464.html
+# https://cbail.github.io/SICSS_Dictionary-Based_Text_Analysis.html
+# https://bookdown.org/rdpeng/rprogdatascience/
+# https://r4ds.had.co.nz/index.html
+# https://towardsdatascience.com/python-vs-r-what-i-learned-from-4-000-job-advertisements-ab41661b7f28
+# https://r-charts.com/
+# https://ggplot2.tidyverse.org/index.html
+# http://adv-r.had.co.nz/
 
-#https://stackoverflow.com/questions/56955320/file-contain-u00c2-u00a0-convert-to-characters
-#https://stackoverflow.com/questions/10294284/remove-all-special-characters-from-a-string-in-r
-#https://stackoverflow.com/questions/60259657/how-to-remove-non-utf-8-characters-from-text
+# > SECONDARY References
+# https://statsandr.com/blog/how-to-upload-r-code-on-github-example-with-an-r-script-on-mac-os/
+# https://bookdown.org/yihui/rmarkdown/
 
-#https://statsandr.com/blog/how-to-upload-r-code-on-github-example-with-an-r-script-on-mac-os/
+# https://stackoverflow.com/questions/21641522/how-to-remove-specific-special-characters-in-r/21641569
+# https://stackoverflow.com/questions/49886782/remove-special-characters-from-entire-dataframe-in-r
+
+# https://stackoverflow.com/questions/56955320/file-contain-u00c2-u00a0-convert-to-characters
+# https://stackoverflow.com/questions/10294284/remove-all-special-characters-from-a-string-in-r
+# https://stackoverflow.com/questions/60259657/how-to-remove-non-utf-8-characters-from-text
+
+# https://statsandr.com/blog/how-to-upload-r-code-on-github-example-with-an-r-script-on-mac-os/
+# https://stackoverflow.com/questions/43456687/using-dplyr-gsub-on-many-columns
+
+# https://r-lang.com/not-in-r/
 
 # Text mining NYC jobs
 # https://data.cityofnewyork.us/City-Government/NYC-Jobs/kpav-sd4t
@@ -111,33 +131,33 @@ job_postings_by_exp_level_agency <- nyc_jobs %>%
 
 
 # Microsoft
-microsoft <- c("Excel",	"MS Excel",	"M.S. Excel",	"Microsoft Excel",	"Piivot Tables",	"PivotTables",	"VBA")
+microsoft <- c("Excel","MS Excel","M.S. Excel","Microsoft Excel","Piivot Tables","PivotTables","VBA")
 t_microsoft <- paste0(unlist(microsoft),collapse = "|")
 
 
 # Access
-ms_access <- c("MS Access",	"M.S. Access",	"Access Forms",	"Access",	"Microsoft Access")
+ms_access <- c("MS Access","M.S. Access","Access Forms","Access","Microsoft Access")
 t_ms_access <- paste0(unlist(ms_access),collapse = "|")
 
 
 # Excel
-ms_excel <- c("Excel",	"MS Excel",	"M.S. Excel",	"Microsoft Excel",	"Piivot Tables",	"PivotTables",	"VBA")
+ms_excel <- c("Excel","MS Excel","M.S. Excel","Microsoft Excel","Piivot Tables","PivotTables","VBA")
 t_ms_excel <- paste0(unlist(ms_excel),collapse = "|")
 
 
 # SQL
-sql <- c("SQL",	"T-SQL",	"Db2",	"Oracle",	"IBM Db2",	"SQLite",	"MySQL",	"Microsoft SQL Server",	"SQL Server",	"SSMS",	"PostgreSQL",	
-         "pgAdmin",	"sql server management studio",	"SQL server management studio",	"SQL Server Management Studio")
+sql <- c("SQL","T-SQL","Db2","Oracle","IBM Db2","SQLite","MySQL","Microsoft SQL Server","SQL Server","SSMS","PostgreSQL",
+         "pgAdmin","sql server management studio","SQL server management studio","SQL Server Management Studio")
 t_sql <- paste0(unlist(sql),collapse = "|")
 
 
 # Python
-python <- c("Python",	"Anaconda",	"Pycharm",	"PyCharm",	"Pandas",	"SciPy",	"Numpy",	"Matplotlib",	"Seaborn",	"Scikit-Learn",	"TensorFlow")
+python <- c("Python","Anaconda","Pycharm","PyCharm","Pandas","SciPy","Numpy","Matplotlib","Seaborn","Scikit-Learn","TensorFlow")
 t_python <- paste0(unlist(python),collapse = "|")
 
 
 # R
-rstudio <- c("RStudio", "Rstudio", "R,", " R,", " R ", "DBI", "tidyverse", "dplyr", "tidyr", "ggplot2", "ggplot", "ggmap")
+rstudio <- c("RStudio","Rstudio","R,"," R,"," R ","DBI","tidyverse","dplyr","tidyr","ggplot2","ggplot","ggmap")
 t_rstudio <- paste0(unlist(rstudio),collapse = "|")
 
 
@@ -247,8 +267,6 @@ SPR %>%
   ggplot(aes(n, word)) +
   geom_col() +
   labs(title = "Python, R, & SQL Ngrams", x = "Term Freq", y = "Term")
-
-
 
 
 ##------------------------------------------------------
@@ -391,3 +409,4 @@ NOT_SPR %>%
 # > info on experience level - does sentiment vary 
 # > what "machine learning" methods can i use to tease out info - add other vars from posting to ngrams?
 # > Write-up in Rmarkdown
+# https://www.tidytextmining.com/ngrams.html#counting-and-filtering-n-grams
