@@ -408,5 +408,54 @@ NOT_SPR %>%
 # > average wage by skill set - excel/access, python/r/sql, all others
 # > info on experience level - does sentiment vary 
 # > what "machine learning" methods can i use to tease out info - add other vars from posting to ngrams?
+# > topic modelind
+#     > https://slcladal.github.io/topicmodels.html
 # > Write-up in Rmarkdown
 # https://www.tidytextmining.com/ngrams.html#counting-and-filtering-n-grams
+
+# model each agency as a book/corpus
+# select(agency,job_description,minimum_qual_requirements,preferred_skills) 
+
+
+
+
+job <- nyc_jobs
+
+# there are encoding issues to remove
+job[] <- lapply(job, iconv, "UTF-8", "ASCII", sub="")
+job[] <- lapply(job, str_trim)
+job[] <- lapply(job, str_squish)
+
+# select just job description stuff
+job <- job %>% 
+  select(job_description,minimum_qual_requirements,preferred_skills) %>% 
+  as.data.frame()
+
+# clean the data - remove blanks/null/missing and UNNEST
+job_preferred_skills <- job %>% select(preferred_skills) %>% 
+  filter(!map_lgl(preferred_skills, is.null)) %>%
+  filter(!map_lgl(preferred_skills, is.na)) %>% 
+  filter(preferred_skills != "") %>% unnest(preferred_skills)
+
+# remove non-alphanumeric values
+job_preferred_skills <- job_preferred_skills %>%  # The ideal candidate shall have 7-10 years of experience
+  mutate(across(everything(),~ gsub("[^[:alnum:] ]", " ", .))) %>% # The ideal candidate shall have 710 years of experience
+  mutate(across(everything(),~ gsub("[[:punct:]]", " ", .))) %>% # The ideal candidate shall have 710 years of experience
+  mutate(across(everything(),~ gsub("[[:digit:]]+", " ", .))) # The ideal candidate shall have  years of experience
+  
+
+# create tokens
+job_preferred_skills_tokens <- job_preferred_skills %>%
+  tidytext::unnest_tokens(word, preferred_skills) %>%
+  count(word, sort = TRUE) 
+  
+
+total_job_preferred_skills_tokens <- job_preferred_skills_tokens %>% 
+  group_by(word) %>% 
+  summarize(total = sum(n))
+
+library(ggplot2)
+
+ggplot(job_preferred_skills_tokens, aes(n/sum(n),fill=n)) +
+  geom_histogram(show.legend = FALSE) +
+  xlim(NA, 0.0009) 
