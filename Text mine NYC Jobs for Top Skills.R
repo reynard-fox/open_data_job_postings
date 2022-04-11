@@ -1,3 +1,5 @@
+# Status: Working Draft
+
 #------------------[ REFERENCE MATERIAL]------------------#
 
 # > MAIN References
@@ -41,6 +43,8 @@
 # Clean up
 rm(list=ls())
 
+
+# Set  up
 `%!in%` <- Negate(`%in%`)
 
 library(RSocrata)
@@ -56,9 +60,16 @@ nyc_jobs <- "https://data.cityofnewyork.us/resource/kpav-sd4t.json?$select=*"
 nyc_jobs <- read.socrata("https://data.cityofnewyork.us/api/odata/v4/kpav-sd4t",stringsAsFactors=FALSE)
 
 
-# Set working directory
+# Set working GitHub directory
 script_name <- rstudioapi::getSourceEditorContext()$path
 setwd(dirname(script_name))
+
+
+# Save data & script in other file. The data is for future reference, the R script is for project history
+store <- '~/Desktop/github/project 04 nyc jobs/'
+filename <- paste0(store,'nyc_jobs_',as.character(Sys.time(), format="%Y-%m-%d"),'.csv')
+write.csv(nyc_jobs,filename)
+file.copy(script_name, store)
 
 
 # Prep data for analysis
@@ -404,11 +415,13 @@ NOT_SPR %>%
 # STOP
 
 # things to add
+# > simplify & cleanup - lot of repetition; see what steps to turn into functions
 # > positive/negative sentiment
 # > average wage by skill set - excel/access, python/r/sql, all others
 # > info on experience level - does sentiment vary 
 # > what "machine learning" methods can i use to tease out info - add other vars from posting to ngrams?
-# > topic modelind
+# > add in open data sets for each agency as proxy for data sophistication - maps, large datasets, frequency of update all correlated with greater data needs?
+# > topic modeling
 #     > https://slcladal.github.io/topicmodels.html
 # > Write-up in Rmarkdown
 # https://www.tidytextmining.com/ngrams.html#counting-and-filtering-n-grams
