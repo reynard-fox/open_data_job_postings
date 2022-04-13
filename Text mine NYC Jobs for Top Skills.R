@@ -1,8 +1,47 @@
 # Status: Working Draft
 
+# Work Plan
+# > Recreate Excel analysis in R
+#   > load data
+#   > search preferred skills description for key terms - python,r,sql,excel,access,other stuff...
+#   > calculate: [avg starting wage, num openings] by [key term, agency] and any other "vars of interest"
+#   > calculate positive/negative TEXT sentiment for a posting - use all long text vars: 
+#           job_description, minimum_qual_requirements, preferred_skills, additional_information
+# > Answer Q: Any relationship between pref_skill binary and other CATEGORICAL vars?
+#   > 1. classify each categorical var as: binary, ordinal, nominal/arbitrary
+#   > 2. cross tab summaries between pref_skil and all others, and any others?
+#   > 3. what test to use? some type of correlation or chi-square?
+#     > Vars of Interest: posting_type, business_title, civil_service_title, title_classification, level,
+#                         job_category, career_level, work_location, residency_requirement, pref_data_flags
+# > Clean-up: what steps to turn into functions, etc.
+
+# ODDs & ENDs - things to consider/add
+# > what "machine learning" methods can i use to tease out info - add other vars from posting to ngrams?
+# > add in open data sets for each agency as proxy for data sophistication - maps, large datasets, frequency of update all correlated with greater data needs?
+# > topic modeling
+#     > https://slcladal.github.io/topicmodels.html
+# > Write-up in Rmarkdown
+# > Model each agency as a book/corpus
+#     select(agency,job_description,minimum_qual_requirements,preferred_skills) 
+#     https://www.tidytextmining.com/ngrams.html#counting-and-filtering-n-grams
+
+
+
+
 #------------------[ REFERENCE MATERIAL]------------------#
 
-# > MAIN References
+# > CORRELATION References
+# https://www.google.com/search?q=calculate+correlation+between+binary+and+nominal+variables
+# https://medium.com/@outside2SDs/an-overview-of-correlation-measures-between-categorical-and-continuous-variables-4c7f85610365
+# https://www.statology.org/correlation-between-categorical-variables/
+# https://datascience.stackexchange.com/questions/893/how-to-get-correlation-between-two-categorical-variable-and-a-categorical-variab
+# https://datascience.stackexchange.com/questions/51591/what-measures-can-i-use-to-find-correlation-between-categorical-features-and-bin
+# https://datascience.stackexchange.com/questions/43631/correlation-between-nominal-categorical-variables
+# https://datascience.stackexchange.com/questions/90347/calculating-correlation-for-categorical-variables
+# https://datascience.stackexchange.com/questions/12743/r-how-to-determine-the-correlation-between-unordered-categorical-variables-and
+# 
+
+# > GENERAL References
 # https://rpubs.com/tonmcg/socrata-discovery
 # https://www.tidytextmining.com/index.html
 # https://epirhandbook.com/en/index.html
@@ -69,12 +108,13 @@ setwd(dirname(script_name))
 store <- '~/Desktop/github/project 04 nyc jobs/'
 filename <- paste0(store,'nyc_jobs_',as.character(Sys.time(), format="%Y-%m-%d"),'.csv')
 write.csv(nyc_jobs,filename)
-file.copy(script_name, store)
+file.copy(script_name, store, overwrite = TRUE)
 
 
 # Prep data for analysis
 nyc_jobs$floor.month <- floor_date(nyc_jobs$posting_date, "month")
 nyc_jobs$career_level <-ifelse(is.na(nyc_jobs$career_level) | nyc_jobs$career_level == "", "Unknown",nyc_jobs$career_level)
+
 
 ##------------------------------------------------------
 ## Job postings by date, agency, and career level
@@ -103,6 +143,15 @@ ggplot(job_postings_by_month, aes(x = floor.month)) +
 
 # DATA: total job postings by agency
 job_postings_by_agency <- nyc_jobs %>% 
+  select(agency,number_of_positions) %>%
+  group_by(agency) %>%
+  summarise(new_postings_count = sum(n()),
+            total_postings_count = sum(number_of_positions)) %>%
+  arrange(desc(total_postings_count))
+
+
+# DATA: total job postings by agency and month
+job_postings_by_agency_month <- nyc_jobs %>% 
   select(floor.month,agency) %>%
   group_by(floor.month,agency) %>%
   summarise(new_postings_count = sum(n())) %>%
@@ -110,7 +159,7 @@ job_postings_by_agency <- nyc_jobs %>%
 
 
 # BAR CHART: total job postings by agency
-job_postings_by_agency %>% group_by(agency) %>% 
+job_postings_by_agency_month %>% group_by(agency) %>% 
   summarise(new_postings_count = sum(new_postings_count)) %>% arrange(desc(new_postings_count)) %>%
   ggplot(aes(x=reorder(agency,new_postings_count),y=new_postings_count, fill=agency)) + 
   geom_bar(stat="identity") +
@@ -119,6 +168,14 @@ job_postings_by_agency %>% group_by(agency) %>%
   theme(legend.position = "none",
         axis.text.x=element_blank()) +
   labs(title = "Total Job Postings by Agency", x = "Total Job Postings", y = "Agency") 
+
+
+# TABLE: total job postings by agency - top 10 account for 62% of total postings
+job_postings_by_agency %>% 
+  mutate(freq = new_postings_count / sum(new_postings_count)) %>%
+  arrange(desc(new_postings_count)) %>%
+  mutate(csum=cumsum(freq)) %>%
+  top_n(freq,n=10)
 
 
 # DATA: total job postings by career level & agency
@@ -181,7 +238,7 @@ nyc_jobs <- nyc_jobs %>%
          python = if_else(str_detect(preferred_skills,t_python),1,0,missing=0),
          rstudio = if_else(str_detect(preferred_skills,t_rstudio),1,0,missing=0)) 
 
-# sumamrize findings
+# summarize findings
 nyc_jobs %>% summarize(microsoft = sum(microsoft),
                        ms_access = sum(ms_access),
                        ms_excel = sum(ms_excel),
@@ -202,6 +259,7 @@ nyc_jobs %>%
             python = sum(python),
             rstudio = sum(rstudio)) -> skill_career_level
 
+
 # DATA: total job postings by agency & preferred skill     
 nyc_jobs %>% 
   select(agency,microsoft,ms_access,ms_excel,sql,python,rstudio) %>%
@@ -213,6 +271,43 @@ nyc_jobs %>%
             sql = sum(sql),
             python = sum(python),
             rstudio = sum(rstudio)) -> skill_agency
+
+
+
+nyc_jobs %>% 
+  select(agency,salary_range_from,salary_range_to,microsoft,ms_access,ms_excel,sql,python,rstudio) %>%
+  #group_by(agency) %>%
+  summarise(total_postings = n(),
+            microsoft_min_wge = mean(ifelse(microsoft==1, salary_range_from, NA), na.rm=TRUE),
+            microsoft_max = mean(ifelse(microsoft==1, salary_range_to, NA), na.rm=TRUE),
+            microsoft_num = sum(microsoft),            
+            
+            ms_access_min_wge = mean(ifelse(ms_access==1, salary_range_from, NA), na.rm=TRUE),
+            ms_access_max = mean(ifelse(ms_access==1, salary_range_to, NA), na.rm=TRUE),
+            ms_access_num = sum(ms_access),            
+            
+            ms_excel_min_wge = mean(ifelse(ms_excel==1, salary_range_from, NA), na.rm=TRUE),
+            ms_excel_max = mean(ifelse(ms_excel==1, salary_range_to, NA), na.rm=TRUE),
+            ms_excel_num = sum(ms_excel),            
+            
+            
+            sql_min_wge = mean(ifelse(sql==1, salary_range_from, NA), na.rm=TRUE),
+            sql_max = mean(ifelse(sql==1, salary_range_to, NA), na.rm=TRUE),
+            sql_num = sum(sql),            
+            
+            
+            python_min_wge = mean(ifelse(python==1, salary_range_from, NA), na.rm=TRUE),
+            python_max = mean(ifelse(python==1, salary_range_to, NA), na.rm=TRUE),
+            pythonl_num = sum(python),            
+            
+            
+            rstudio_min_wge = mean(ifelse(rstudio==1, salary_range_from, NA), na.rm=TRUE),
+            rstudio_max = mean(ifelse(rstudio==1, salary_range_to, NA), na.rm=TRUE),
+            rstudio_num = sum(rstudio)       
+            
+            ) %>% t()
+
+
 
 
 ##------------------------------------------------------
@@ -413,22 +508,6 @@ NOT_SPR %>%
 
 ###############################
 # STOP
-
-# things to add
-# > simplify & cleanup - lot of repetition; see what steps to turn into functions
-# > positive/negative sentiment
-# > average wage by skill set - excel/access, python/r/sql, all others
-# > info on experience level - does sentiment vary 
-# > what "machine learning" methods can i use to tease out info - add other vars from posting to ngrams?
-# > add in open data sets for each agency as proxy for data sophistication - maps, large datasets, frequency of update all correlated with greater data needs?
-# > topic modeling
-#     > https://slcladal.github.io/topicmodels.html
-# > Write-up in Rmarkdown
-# https://www.tidytextmining.com/ngrams.html#counting-and-filtering-n-grams
-
-# model each agency as a book/corpus
-# select(agency,job_description,minimum_qual_requirements,preferred_skills) 
-
 
 
 
